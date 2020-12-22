@@ -12,6 +12,7 @@ The Python script uses Open Hardware Monitor's built-in web server to get the fo
 * GPU fan speed percentage and RPM
 * GPU core and memory clock
 * RAM name, load, temperature, usage and available
+LCD library provided in: https://www.recantha.co.uk/blog/?p=4849 (has to be named as "I2C_LCD_driver.py")
 
 ### Making it run on startup
 Set these options in Open Hardware Monitor:
