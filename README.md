@@ -1,58 +1,23 @@
-# Arduino PC Monitor
-An Arduino program and Python script that work together to give you realtime information about your system on an LCD!
+# Open Hardware Monitor Python library
+Python module that gives you most of the info of your pc over the network!
 
 ![screenshot](images/lcd.gif?raw=true)
 
 ## How does it work?
 
-The Python script uses Open Hardware Monitor's built-in web server to get the following information and send it to the Arduino via serial:
+The Python script uses Open Hardware Monitor's built-in web server to get the following information:
 
-* CPU load and core temperatures (up to 4 cores)
-* GPU load, core temperature and used memory
-* GPU fan speed percentage and RPM *(with cool little fan animation!)*
+* CPU name, load and core temperatures
+* GPU name, load, core temperature, available and used memory
+* GPU fan speed percentage and RPM
 * GPU core and memory clock
+* RAM name, load, temperature, usage and available
 
-Then the Arduino displays this information on its LCD display. Since it's powered by USB, the display turns on or off with your PC.
-
-## Hardware setup
-You only have to connect a **20x4 character LCD** to your Arduino and then connect it to your computer via USB. Note that since I didn't have a potentiometer, I connected my LCD's backlight (Bklt+) and contrast (Vo) pins to the Arduino's PWM outputs 9 and 6 respectively.
-
-The LCD has to be compatible with the [LiquidCrystal](https://www.arduino.cc/en/Reference/LiquidCrystal) library. If you have a smaller one like 16x2 you can edit the program to make it display less information.
-
-I used an Arduino clone called "Pro Micro" because of its small size. It has an ATmega32u4 microcontroller like the [Arduino Leonardo](https://www.arduino.cc/en/Main/ArduinoBoardLeonardo) but the code should also work with Arduino UNO and similar.
-
-## Software setup
-Keep in mind this only works on Windows.
-
-1. Install [Open Hardware Monitor v0.8.0 Beta](http://openhardwaremonitor.org/)
-2. Install [Python 3+](https://www.python.org/downloads/) (tested with 3.4-3.7), making sure to check the "Add Python 3.X to PATH" checkbox so you can run it from the Command Prompt.
-![screenshot](images/pythontopath.png?raw=true)
-
-3. Install the pyserial package by running `pip install pyserial` in a Command Prompt: 
-![screenshot](images/pyserialinstall.png?raw=true)
-
-4. In the `config.json` file, change the options to suit your system. Find the serial port your Arduino connects to (via Device Manager), set the CPU and GPU names to the ones appropriate to your system (as they are shown in Open Hardware Monitor) and set the correct GPU memory size for your GPU. You can also change the IP and port of Open Hardware Monitor's web server (default is `localhost:8085`) 
-5. In the Arduino code, setup the LCD [settings](https://github.com/leots/Arduino-PC-Monitor/blob/master/ArduinoPCMonitor.ino#L3) and [pins](https://github.com/leots/Arduino-PC-Monitor/blob/master/ArduinoPCMonitor.ino#L7) depending on your configuration, then run it!
-6. [Make everything run on startup](#making-everything-run-on-startup)
-
-Done :)
-
-### Making everything run on startup
+### Making it run on startup
 Set these options in Open Hardware Monitor:
 
 ![screenshot](images/ohm_options.png?raw=true)
 
-Also check "Run" in the "Remote Web Server" submenu.
+![screenshot](images/OHWserver.png?raw=true)
 
-Setup a task in Windows' Task Scheduler (find it by searching in the start menu) to start the Python script silently:
-
-* Set the task to "Start a program"
-* Set the program to `pythonw.exe` (so it doesn't create a command prompt window). The default path to this file is `%LocalAppData%\Programs\Python\Python37\pythonw.exe` (also depends on your Python version).
-* Add the path to ArduinoPCMonitor.py as an argument (enclose in quotes if it has any spaces). The task action should look similar to this:
-![screenshot](images/taskscheduler.png?raw=true)
-
-* Set the task to run at **log on of any user** and on **workstation unlock**
-* Finally, in the Settings tab of the task, select to **Stop the existing instance** if the task is already running
-
-## Thanks
- - to [Psyrax](https://github.com/psyrax/) for inspiration from his [SerialMonitor](https://github.com/psyrax/SerialMonitor) and [ArduinoSerialMonitor](https://github.com/psyrax/ArduinoSerialMonitor) projects
+check "Run" in the "Remote Web Server" submenu.
