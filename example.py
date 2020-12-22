@@ -60,13 +60,13 @@ while True:
             time.sleep(time_between)
             mylcd.lcd_clear()
 
-            my_info = update()
-            mylcd.lcd_display_string("[---ShiroNeko-PC---]",1)
-            mylcd.lcd_display_string(config['cpu_name'].replace("Intel ",""),2)
-            mylcd.lcd_display_string(config['gpu_name'].replace("NVIDIA ",""),3)
-            mylcd.lcd_display_string("{} {}".format(config['ram_name'],my_info["ram"]["total"]),4)
-            time.sleep(time_between*2)
-            mylcd.lcd_clear()
+        my_info = update()
+        mylcd.lcd_display_string("[---ShiroNeko-PC---]",1)
+        mylcd.lcd_display_string(config['cpu_name'].replace("Intel ",""),2)
+        mylcd.lcd_display_string(config['gpu_name'].replace("NVIDIA ",""),3)
+        mylcd.lcd_display_string("{} {}".format(config['ram_name'],my_info["ram"]["total"]),4)
+        time.sleep(time_between*2)
+        mylcd.lcd_clear()
     except:
         print("connection failed!")
         
