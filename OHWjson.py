@@ -52,7 +52,7 @@ def get_json_contents(json_url):
 
     req = Request(json_url)
     try:
-        response = urlopen(req, timeout = 2).read()
+        response = urlopen(req, timeout = 5).read()
     except HTTPError as e:
         print('HTTPError ' + str(e.code))
     except URLError as e:
@@ -146,17 +146,20 @@ def get_hardware_info(ohw_ip, ohw_port, cpu_name,ram_name, gpu_name, gpu_mem_siz
 
     for core_clock in cpu_clocks['Children']:
         if 'Core' in core_clock['Text']:
-            cpu_core_clocks.append((core_clock['Value'][:-4]))
-
+            cpu_core_clocks.append((round(float(core_clock['Value'][:-4].replace(',','.')))))
+            
+    cpu_core_clock = round(sum(cpu_core_clocks) / len(cpu_core_clocks)) #avarage of all cpu clocks and then rounded
+    
+    
     cpu_info['name'] = cpu_name
     cpu_info['load'] = cpu_load['Value'][:-4]
     cpu_info['temp'] = cpu_package_temp['Value'][:-5]
     cpu_info['temps'] = cpu_core_temps
     cpu_info['clocks'] = cpu_core_clocks
+    cpu_info['clock'] = cpu_core_clock
     my_info['cpu'] = cpu_info
-
-    # Get info for RAM
     
+    # Get info for RAM
     ram_data = find_in_data(data_json, ram_name)
     ram_load = find_in_data(ram_data, 'Load')
     ram_memory_load = find_in_data(ram_load, 'Memory')
@@ -167,72 +170,31 @@ def get_hardware_info(ohw_ip, ohw_port, cpu_name,ram_name, gpu_name, gpu_mem_siz
     ram_used = find_in_data(ram_mem_data, 'Used Memory')
     ram_available = find_in_data(ram_mem_data, 'Available Memory')
 
-    ram_info['used'] = ram_used['Value'].replace(' ', '')
-    ram_info['available'] = ram_available['Value'].replace(' ', '')
+    ram_info['used'] = ram_used['Value'].replace(' ', '').replace(',','.')
+    
+    ram_info['available'] = ram_available['Value'].replace(' ', '').replace(',','.')
     ram_info['total'] = "{}{}".format(round(float(ram_info['used'][:-2])+float(ram_info['available'][:-2])),ram_info['available'][-2:])
-    my_info['ram'] = ram_info
+    my_info['ram'] = ram_info    
 
     # Get info for GPU
     gpu_data = find_in_data(data_json, gpu_name)
+    gpu_temp = find_in_data(find_in_data(gpu_data, 'Temperatures'),'GPU Core')
+    gpu_core_load = find_in_data(find_in_data(gpu_data, 'Load'),'GPU Core')
+    gpu_core_clock = find_in_data(find_in_data(gpu_data, 'Clocks'),'GPU Core')
+    gpu_mem_clock =  find_in_data(find_in_data(gpu_data, 'Clocks'),'GPU Memory')
+    gpu_fan_percent = find_in_data(find_in_data(gpu_data, 'Controls'),'GPU Fan')
+    gpu_fan_rpm = find_in_data(find_in_data(gpu_data, 'Fans'),'GPU')
+    # Add GPU info to GPU object
     gpu_info['name'] = gpu_name
-    gpu_clocks = find_in_data(gpu_data, 'Clocks')
-    gpu_load = find_in_data(gpu_data, 'Load')
-
-    gpu_core_clock = find_in_data(gpu_clocks, 'GPU Core')
-    gpu_mem_clock = find_in_data(gpu_clocks, 'GPU Memory')
-    gpu_temp = find_in_data(find_in_data(gpu_data, 'Temperatures'), 'GPU Core')
-    gpu_core_load = find_in_data(gpu_load, 'GPU Core')
-    fan_percent = find_in_data(find_in_data(gpu_data, 'Controls'), 'GPU Fan')
-
-    # Check if the GPU has fan RPM info or just PWM info (percentage)
-    if gpu_fan_rpm is None:
-        gpu_fans = find_in_data(gpu_data, 'Fans')
-        gpu_fan_rpm = (gpu_fans != -1)
-
-    # Get data for GPU fans (or PWM percentage)
-    if gpu_fan_rpm:
-        gpu_fans = find_in_data(gpu_data, 'Fans')
-    else:
-        gpu_fans = find_in_data(gpu_data, 'Controls')
-
-    # Get GPU Fan RPM info (check both Fans > GPU and Fans > GPU Fan)
-    fan_rpm = find_in_data(gpu_fans, 'GPU')
-    if fan_rpm == -1:
-        fan_rpm = find_in_data(gpu_fans, 'GPU Fan')
-
-    # Check if the GPU has used memory information, and remember it
-    if show_gpu_mem is None:
-        gpu_mem_percent = find_in_data(gpu_load, 'GPU Memory')
-        show_gpu_mem = (gpu_mem_percent != -1)
-
-    # Get GPU Memory percentage if it exists, otherwise GPU voltage
-    if show_gpu_mem:
-        # Get GPU memory percentage
-        gpu_mem_percent = find_in_data(gpu_load, 'GPU Memory')
-
-        # Calculate used MBs of GPU memory based on the percentage
-        used_percentage = float(
-            gpu_mem_percent['Value'][:-2].replace(",", "."))
-        used_mb = int((gpu_mem_size * used_percentage) / 100)
-
-        # Add to GPU info object
-        gpu_info['used_mem'] = used_mb
-        gpu_info['free_memory'] = round(float(find_in_data(gpu_data, 'GPU Memory Free')['Value'][:-3]))
-    else:
-        # Get GPU voltage
-        voltages = find_in_data(gpu_data, 'Voltages')
-        core_voltage = find_in_data(voltages, 'GPU Core')
-        gpu_info['voltage'] = core_voltage['Value'][:-2]
-
-    # Add rest of GPU info to GPU object
+    gpu_info['used_mem'] = int(find_in_data(gpu_data, 'GPU Memory Used')['Value'][:-5])
+    gpu_info['free_memory'] = int(find_in_data(gpu_data, 'GPU Memory Free')['Value'][:-5])
     gpu_info['temp'] = get_temperature_number(gpu_temp['Value'])
     gpu_info['load'] = gpu_core_load['Value'][:-4]
-    gpu_info['core_clock'] = gpu_core_clock['Value'][:-4]
-    gpu_info['mem_clock'] = gpu_mem_clock['Value'][:-4]
-    gpu_info['fan_percent'] = fan_percent['Value'][:-4]
-    gpu_info['fan_rpm'] = fan_rpm['Value'][:-4]
-
+    gpu_info['core_clock'] = round(float(gpu_core_clock['Value'][:-4].replace(',','.')))
+    gpu_info['mem_clock'] = round(float(gpu_mem_clock['Value'][:-4].replace(',','.')))
+    gpu_info['fan_percent'] = gpu_fan_percent['Value'][:-4]
+    gpu_info['fan_rpm'] = gpu_fan_rpm['Value'][:-4]
+    
     # Add GPU info to my_info
     my_info['gpu'] = gpu_info
-
     return my_info
