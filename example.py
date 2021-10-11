@@ -2,6 +2,7 @@ from subprocess import call
 import OHWjson as OHW
 import I2C_LCD_driver 
 import os
+import sys
 import time
 
 cycles = range(2)
@@ -12,6 +13,8 @@ mylcd = I2C_LCD_driver.lcd()
 cd = os.path.join(os.getcwd(), os.path.dirname(__file__))
 __location__ = os.path.realpath(cd)
 config = OHW.get_local_json_contents(os.path.join(__location__, 'config.json'))
+
+print("IP:" + config["ohw_ip"])
 
 mylcd.backlight(1)
 mylcd.lcd_clear()
@@ -43,11 +46,10 @@ while True:
 
         for _ in cycles:
             my_info = update()
-            clock = [float(n) for n in my_info["cpu"]["clocks"] if n]
             mylcd.lcd_display_string("[-{}--]".format((config['cpu_name'].replace("Intel ","").replace(" ","-"))),1)
             mylcd.lcd_display_string("Load:{}%".format(my_info["cpu"]["load"]),2)
             mylcd.lcd_display_string("Temp:{}c".format(my_info["cpu"]["temp"]),3)
-            mylcd.lcd_display_string("Clock:{}Ghz".format(round(sum(clock)/len(clock)/1000,2)),4)
+            mylcd.lcd_display_string("Clock:{}Ghz".format(round(my_info["cpu"]["clock"]/1000,2)),4)
             time.sleep(time_between)
             mylcd.lcd_clear()
 
@@ -67,7 +69,11 @@ while True:
         mylcd.lcd_display_string("{} {}".format(config['ram_name'],my_info["ram"]["total"]),4)
         time.sleep(time_between*2)
         mylcd.lcd_clear()
-    except:
+    except Exception as e: 
+        print(e)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
         print("connection failed!")
         
         mylcd.lcd_clear()

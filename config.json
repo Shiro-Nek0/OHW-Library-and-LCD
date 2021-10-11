@@ -1,5 +1,5 @@
 {
-  "ohw_ip": "YOUR PC IP",
+  "ohw_ip": "YOUR LOCAL IP FROM OHW",
   "ohw_port": "8085",
   "cpu_name": "Intel Xeon E5-2650 v2",
   "ram_name": "Generic Memory",
